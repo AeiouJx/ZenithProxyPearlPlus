@@ -50,8 +50,8 @@ public class PearlPlusCommand extends Command {
                 "autodefault <on/off>",
                 "whitelist <on/off / add / clear / list / remove>",
                 "droppearlafterload <on/off>",
-                "set-restock-container <x> <y> <z>",
-                "set-restock-container clear",
+                "restockChest set <x> <y> <z>",
+                "restockChest clear",
                 "debug <true/false>"
             )
             .aliases("pp")
@@ -358,16 +358,17 @@ public class PearlPlusCommand extends Command {
                     return 0;
                 })));
 
-        builder.then(literal("set-restock-container")
+        builder.then(literal("restockChest")
                 .then(literal("clear").executes(c -> {
                     PLUGIN_CONFIG.restock.enabled = false;
                     MODULE.get(PearlRestockModule.class).syncEnabledFromConfig();
                     c.getSource().getEmbed().title("Restock container cleared");
                     return 0;
                 }))
-                .then(argument("x", integer())
-                        .then(argument("y", integer())
-                                .then(argument("z", integer()).executes(c -> {
+                .then(literal("set")
+                    .then(argument("x", integer())
+                            .then(argument("y", integer())
+                                    .then(argument("z", integer()).executes(c -> {
                                     int x = getInteger(c, "x");
                                     int y = getInteger(c, "y");
                                     int z = getInteger(c, "z");
@@ -388,7 +389,7 @@ public class PearlPlusCommand extends Command {
                                         }
                                     }
                                     return 0;
-                                })))));
+                                }))))));
 
         builder.then(literal("debug")
                 .then(argument("toggle", toggle()).executes(c -> {

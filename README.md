@@ -73,8 +73,8 @@ pearlplus droppearlafterload <on/off>
 ```
 
 ```bash
-pearlplus set-restock-container <x> <y> <z>
-pearlplus set-restock-container clear
+pearlplus restockChest set <x> <y> <z>
+pearlplus restockChest clear
 ```
 
 After a successful load, if the bot has no ender pearls left, it walks to the configured container (chest, barrel, shulker, etc.) and takes one stack.
