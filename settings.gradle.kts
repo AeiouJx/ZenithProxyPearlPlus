@@ -5,8 +5,4 @@ pluginManagement {
     }
 }
 
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-}
-
 rootProject.name = ext.properties["plugin_name"] as String

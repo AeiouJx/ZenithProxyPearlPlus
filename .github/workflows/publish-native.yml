@@ -1,0 +1,106 @@
+name: Publish Native Plugin
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-native-linux:
+    runs-on: ubuntu-latest
+    outputs:
+      plugin_version: ${{ steps.version.outputs.plugin_version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup GraalVM
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+
+      - name: Elevate wrapper permissions
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Get Plugin Version
+        id: version
+        run: echo "plugin_version=$(grep '^plugin_version=' gradle.properties | cut -d'=' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Build Native Image (Linux)
+        run: ./gradlew nativeCompile
+
+      - name: Zip Linux Binary
+        run: |
+          mkdir -p artifacts
+          zip -j artifacts/PearlPlus-linux.zip build/native/nativeCompile/*
+
+      - name: Upload Linux Binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-linux
+          path: artifacts/PearlPlus-linux.zip
+          if-no-files-found: error
+
+  build-native-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup GraalVM
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build Native Image (Windows)
+        shell: cmd
+        run: ./gradlew nativeCompile
+
+      - name: Zip Windows Binary
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Compress-Archive -Path build/native/nativeCompile/* -DestinationPath artifacts/PearlPlus-windows.zip
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-windows
+          path: artifacts/PearlPlus-windows.zip
+          if-no-files-found: error
+
+  release:
+    needs: [build-native-linux, build-native-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux Binary
+        uses: actions/download-artifact@v8
+        with:
+          name: plugin-linux
+          path: artifacts
+
+      - name: Download Windows Binary
+        uses: actions/download-artifact@v8
+        with:
+          name: plugin-windows
+          path: artifacts
+
+      - name: Publish GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.build-native-linux.outputs.plugin_version }}
+          artifacts: |
+            artifacts/PearlPlus-linux.zip
+            artifacts/PearlPlus-windows.zip
+          allowUpdates: true
+          omitBodyDuringUpdate: true

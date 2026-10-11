@@ -15,7 +15,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-          java-version: '25'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Elevate wrapper permissions
@@ -34,8 +34,6 @@ jobs:
         with:
           name: plugin
           path: build/libs/*.jar
-          archive: false
-          if-no-files-found: error
 
       - name: Get Plugin Version
         run: echo "PLUGIN_VERSION=$(grep '^plugin_version=' gradle.properties | cut -d'=' -f2)" >> $GITHUB_ENV

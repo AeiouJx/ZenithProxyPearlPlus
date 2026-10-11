@@ -1,75 +1,151 @@
-# ZenithProxy Example Plugin
+## PearlPlus
 
-[ZenithProxy](https://github.com/rfresh2/ZenithProxy) is a Minecraft proxy and bot.
+PearlPlus automatically detects new stasis pearls and registers them with its own pearl loader. Pearl throwers can then load these pearls through chat whispers.
+The config is saved to `plugins/config/pearlplus.json`
 
-This repository is an example core plugin for ZenithProxy, allowing you to add custom modules and commands.
+Build the jar with `gradlew build` (or `.\gradlew.bat build` on Windows) and place `build/libs/PearlPlus-2.2.1.jar` in your proxy's plugins folder, or download it from the [releases page](https://github.com/AeiouJx/ZenithProxyPearlPlus/releases) once published.
 
-## Installing Plugins
+This plugin **WILL NOT WORK** unless a correct `chatschema` is set in Zenith. Most vanilla servers like 2b2t and Constantiam don't require you to set one but other servers with custom whisper builders for example 9b9t will need one. Please check the wiki [here](https://wiki.2b2t.vc/Commands/#chatschema).
+You might also need to set the whisper command for the server you're playing on using `extraChat whisperCommand <command>` to allow the bot to whisper back.
 
-Plugins are only supported on the `java` ZenithProxy release channel (i.e. not `linux`).
+If you're chat banned/muted you can load pearls in your client using [PearlPlusMod](https://github.com/duccss/PearlPlusMod) and [PearlPlusWebAPI](https://github.com/duccss/PearlPlusWebAPI) which bypass's chat.
 
-Place plugin jars in the `plugins` folder inside the same folder as the ZenithProxy launcher.
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/AeiouJx/ZenithProxyPearlPlus/build.yml?branch=1.21.4&style=for-the-badge)
 
-Restart ZenithProxy to load plugins. Loading plugins after launch or hot reloading is not supported.
 
-## Creating Plugins
+### Management Commands
 
-Use this repository as a template to create your own plugin repository.
+#### You can use either `pp` or `pearlplus`
 
-### Plugin Structure
+```bash
+pearlplus <on/off>
+```
+```bash
+pearlplus add <playerName> <pearlId> <x> <y> <z>
+```
+```bash
+pearlplus del <playerName> <pearlId>
+```
+```bash
+pearlplus load <playerName> <pearlId>
+```
+```bash
+pearlplus list
+```
+```bash
+pearlplus list clear
+```
+```bash
+pearlplus defaultpearlid <word/none>
+```
+```bash
+pearlplus autodefault <on/off>
+```
+```bash
+pearlplus strict <on/off>
+```
+```bash
+pearlplus loadcommand <word>
+```
+```bash
+pearlplus autodetect <on/off>
+```
+```bash
+pearlplus autodetect temp <on/off>
+```
+```bash
+pearlplus returnpos <on/off>
+```
+```bash
+pearlplus distancecheck <on/off>
+```
 
-Each plugin needs a main class that implements `ZenithProxyPlugin` and is annotated with `@Plugin`.
+```bash
+pearlplus whitelist <on/off>
+pearlplus whitelist add <playername>
+pearlplus whitelist remove <playername>
+pearlplus whitelist list
+pearlplus whitelist clear
+```
 
-Plugin metadata like its unique id, version, and supported MC versions is defined in the `@Plugin` annotation.
+```bash
+pearlplus droppearlafterload <on/off>
+```
 
-[See example](https://github.com/rfresh2/ZenithProxyExamplePlugin/blob/1.21.4/src/main/java/org/example/ExamplePlugin.java)
+```bash
+pearlplus set-restock-container <x> <y> <z>
+pearlplus set-restock-container clear
+```
 
-### Plugin API
+After a successful load, if the bot has no ender pearls left, it walks to the configured container (chest, barrel, shulker, etc.) and takes one stack.
 
-The `ZenithProxyPlugin` interface requires you to implement an `onLoad` method.
+```bash
+pearlplus debug <true/false>
+```
 
-This method provides a `PluginAPI` object that you can use to register modules, commands, and config files.
+When debug is on, the terminal prints the trapdoor (and nearby candidates) the bot is about to click.
 
-`Module` and `Command` classes are implemented the same as in the ZenithProxy source code.
+### In-game Whisper Commands
 
-I recommend looking at existing modules, commands, and plugins for examples.
+There are a few in-game commands players can whisper to the bot to manage their pearls.
 
-* [Module](https://github.com/rfresh2/ZenithProxy/tree/1.21.4/src/main/java/com/zenith/module)
-* [Command](https://github.com/rfresh2/ZenithProxy/tree/1.21.4/src/main/java/com/zenith/command)
-* Plugins
-  * [ZenithProxyVillagerTrader](https://github.com/rfresh2/ZenithProxyVillagerTrader)
-  * [ZenithProxyWebAPI](https://github.com/rfresh2/ZenithProxyWebAPI)
-  * [ZenithProxyChatControl](https://github.com/rfresh2/ZenithProxyChatControl)
-  * More in [my discord server](https://discord.com/channels/1127460556710883391/1369081651564515358)
+`pearls` will list all pearlID's with an asterisk next to ID's where a pearl isn't detected.
 
-### JavaDocs
+`rename oldPearlID newPearlID` changes the pearlID.
 
-https://maven.2b2t.vc/javadoc/releases/com/zenith/ZenithProxy/1.21.4-SNAPSHOT
+`default PearlID` sets that pearl as default if `autodefault` disabled.
 
-### Building Plugins
+### Usage
 
-Execute the Gradle `build` task: `./gradlew build` - or double-click the task in Intellij
+Simply throw a new ender pearl and once it becomes stable the bot will register it, setting the pearlID as "Base" by default with an incrementing number for subsequent pearls. That player can now whisper `load` (or your configured load command) to the zenith bot and the bot will load the pearl. Players with multiple pearls can add the pearlID after the trigger word to have a specific pearl loaded. Players will receive a warning whisper when loading a stasis chamber where a pearl isn't detected.
 
-The built plugin jar will be in the `build/libs` directory.
+A chamber is claimed by the player who last registered a pearl there. If someone else throws into that column while the claim is still stored, they are whispered that the spot already belongs to the owner and are not registered. After a successful load the claim is released, so a different player can reuse the same chamber. If the pearl is still present a few seconds after the click, the claim is kept.
 
-### Testing Plugins
+```bash
+/w <botName> load <optionalID> 
+```
+By default, when a player doesn't specify which pearl they want loaded the bot will load whatever one where a pearl is detected. Can be disabled with `pp autodefault off`
 
-Execute the `run` task: `./gradlew run` - or double-click the task in Intellij
+Temp mode automatically removes pearl positions where a pearl isn't detected. May be buggy. Not recommended. Do **NOT** use `pp distancecheck` with temp mode.
 
-This will run ZenithProxy with your plugin loaded in the `run` directory.
+Can be enabled with `pp autodetect temp on` 
 
-### New Plugin Checklist
+#### Manual setup
+Use the `pp add/del` commands to set up manually.
 
-1. Edit `gradle.properties`:
-   - `plugin_name` - Name of your plugin, shown to users and in the plugin jar file name (e.g. `ExamplePlugin`)
-   - `plugin_id` - Unique identifier for your plugin (e.g. `example-plugin`)
-     - Must start with a lowercase letter and contain only lowercase letters, numbers, or dashes (`-`)
-   - `mc` - MC version of ZenithProxy your plugin is compiled for (e.g. `1.21.4`)
-   - `maven_group` - Java package for your project (e.g. `com.github.rfresh2`)
-1. Move files to your new corresponding package / maven group:
-   - Example: `src/main/java/org/example` -> `src/main/java/com/github/rfresh2`
-   - First create the new package in `src/main/java`. Then click and drag original subpackages/classes to your new one
-   - Do this with Intellij to avoid manually editing all the source files
-   - You must also create and move package folders for the `src/main/templates` folder
-1. Edit `ExamplePlugin.java`, or remove it and create a new main class
-   - Make sure to update the `@Plugin` annotation
+#### 2b2t / Anti-spam
+
+By default, the bot resolves the username of pearl throwers with entity ID's. Some servers might not allow this so if the bot is unable to register pearls automatically use `pp distancecheck on`. This will get the throwers name from the closest player to the pearl. 2b2t players have reported autodetect ceasing to work occasionally. Always test before enabling this feature.
+
+By default, you can add a random word after `load` or the `pearlID` to get around anti-spam. This can be disabled using `pp strict on`.
+
+#### Recommended Zenith settings
+
+`antiAFK walk off`
+
+`b allowBreak off`
+
+`b allowPlace off`
+
+These settings will stop your pearl bot walking off and prevent it breaking/placing blocks as baritone paths to the pearl trapdoor.
+
+### Fork Changes
+
+- Whisper/registration notifications are queued and batched instead of spamming the thrower.
+- Chamber exclusivity: the first player to register a pearl owns the column; others are told who it belongs to.
+- `pp autodetect temp` releases a claim only once that pearl is gone, so the chamber can be reused.
+- Config writes are deferred: automatic registrations settle for 15 minutes (max 60) before `pearlplus.json` is written once, and are flushed immediately on disconnect or shutdown.
+- `scripts/deploy.ps1` builds and ships the jar to every bot of every server in your ssh config.
+
+### Acknowledgements
+
+This repository is built on the work of these projects - thank you to their authors:
+
+- [duccss/PearlPlus](https://github.com/duccss/PearlPlus) - the original PearlPlus plugin.
+- [steve2b2t/PearlPlus-ng](https://github.com/steve2b2t/PearlPlus-ng) - the PearlPlus-ng fork (2.2.1) this codebase is based on.
+
+### Building The Plugin
+
+Clone [https://github.com/AeiouJx/ZenithProxyPearlPlus](https://github.com/AeiouJx/ZenithProxyPearlPlus) or download the zip.
+Run `chmod +x gradlew`
+ then `./gradlew build`
