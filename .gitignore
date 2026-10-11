@@ -36,3 +36,7 @@ dataGenerator/run
 
 # Ignore Gradle build output directory
 build
+
+# local-only files, kept out of the repository
+/ARCHITECTURE.md
+/scripts/deploy.ps1
